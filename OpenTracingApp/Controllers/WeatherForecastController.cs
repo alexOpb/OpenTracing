@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using OpenTracing;
 
 namespace OpenTracingApp.Controllers;
 
@@ -12,21 +13,29 @@ public class WeatherForecastController : ControllerBase
     };
 
     private readonly ILogger<WeatherForecastController> _logger;
+    private readonly ITracer _tracer;
 
-    public WeatherForecastController(ILogger<WeatherForecastController> logger)
+    public WeatherForecastController(ILogger<WeatherForecastController> logger, ITracer tracer)
     {
         _logger = logger;
+        _tracer = tracer;
     }
 
     [HttpGet(Name = "GetWeatherForecast")]
     public IEnumerable<WeatherForecast> Get()
     {
-        return Enumerable.Range(1, 5).Select(index => new WeatherForecast
+        using var span = _tracer.BuildSpan("MySpan").StartActive();
+        
+        var forecasts = Enumerable.Range(1, 5).Select(index => new WeatherForecast
             {
                 Date = DateTime.Now.AddDays(index),
                 TemperatureC = Random.Shared.Next(-20, 55),
                 Summary = Summaries[Random.Shared.Next(Summaries.Length)]
             })
             .ToArray();
+        
+        span.Span.SetTag("forecastsCount", forecasts.Length);
+        
+        return forecasts;
     }
 }
