@@ -3,6 +3,7 @@ using Jaeger.Samplers;
 using Jaeger.Senders;
 using Jaeger.Senders.Thrift;
 using OpenTracing;
+using OpenTracingApp;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -38,5 +39,7 @@ app.UseHttpsRedirection();
 app.UseAuthorization();
 
 app.MapControllers();
+
+app.UseMiddleware<OpenTracingMiddleware>();
 
 app.Run();

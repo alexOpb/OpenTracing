@@ -24,7 +24,8 @@ public class WeatherForecastController : ControllerBase
     [HttpGet(Name = "GetWeatherForecast")]
     public IEnumerable<WeatherForecast> Get()
     {
-        using var span = _tracer.BuildSpan("MySpan").StartActive();
+        var currentScope = HttpContext.Items["CurrentTracingScope"] as IScope;
+        using var span = _tracer.BuildSpan("MySpan").AsChildOf(currentScope?.Span).StartActive();
         
         var forecasts = Enumerable.Range(1, 5).Select(index => new WeatherForecast
             {
@@ -34,7 +35,7 @@ public class WeatherForecastController : ControllerBase
             })
             .ToArray();
         
-        span.Span.SetTag("forecastsCount", forecasts.Length);
+        span?.Span.SetTag("forecastsCount", forecasts.Length);
         
         return forecasts;
     }
